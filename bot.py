@@ -110,5 +110,4 @@ async def stop(ctx):
 @bot.event
 async def on_command_error(ctx, error):
     await ctx.send(f'An error occurred: {str(error)}')
-# bot.run('MTEyMzk2NzQyNjE3OTExNzA2Ng.G-T9AQ.yHTsWLKKjrp75-aSHOINB8-ohI-nQy5lHBDcSI')
 bot.run(os.getenv('BOT_TOKEN'))
