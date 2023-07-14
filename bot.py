@@ -1,8 +1,12 @@
 import discord
 from discord.ext import commands
 import yt_dlp
-from dotenv import load_dotenv
+import asyncio
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
 
 intents = discord.Intents.all()
 intents.voice_states = True
@@ -20,29 +24,22 @@ async def on_ready():
 
 @bot.command()
 async def play(ctx, *, query):
-    voice_state = ctx.author.voice
-    if voice_state is None or voice_state.channel is None:
-        await ctx.send('You must be in a voice channel to use this command.')
-        return
-
-    voice_channel = voice_state.channel
+    voice_channel = ctx.author.voice.channel
     voice_client = discord.utils.get(bot.voice_clients, guild=ctx.guild)
 
     if voice_client and voice_client.is_connected():
-        if voice_client.channel == voice_channel:
-            await ctx.send('I am already in your voice channel.')
-        else:
-            await ctx.send('I am already in a voice channel. Please use the `stop` command to make me leave.')
-        return
+        await voice_client.move_to(voice_channel)
+    else:
+        voice_client = await voice_channel.connect()
 
     print(f'{ctx.author.name} initiated the play command')
 
     if 'youtube.com' in query or 'youtu.be' in query:
-        await play_song(ctx, voice_channel, query)
+        await play_song(ctx, voice_client, query)
     else:
-        await search_and_play(ctx, voice_channel, query)
+        await search_and_play(ctx, voice_client, query)
 
-async def search_and_play(ctx, voice_channel, query):
+async def search_and_play(ctx, voice_client, query):
     await ctx.send(f'Searching for: {query}')
     search_query = f'ytsearch:{query}'
 
@@ -54,19 +51,13 @@ async def search_and_play(ctx, voice_channel, query):
             if entries:
                 first_entry = entries[0]
                 url = first_entry['webpage_url']
-                await play_song(ctx, voice_channel, url)
+                await play_song(ctx, voice_client, url)
             else:
                 await ctx.send('No search results found.')
         else:
             await ctx.send('No search results found.')
 
-async def play_song(ctx, voice_channel, url):
-    voice_client = discord.utils.get(bot.voice_clients, guild=ctx.guild)
-    if voice_client and voice_client.is_connected():
-        await voice_client.move_to(voice_channel)
-    else:
-        voice_client = await voice_channel.connect()
-
+async def play_song(ctx, voice_client, url):
     ydl_opts = {
         'format': 'bestaudio/best',
         'postprocessors': [{
@@ -95,15 +86,18 @@ async def play_song(ctx, voice_channel, url):
         await play_next_song(ctx, voice_client)
 
 async def play_next_song(ctx, voice_client):
-    if len(song_queue) > 0:
-        song = song_queue[0]
-        voice_client.play(discord.FFmpegPCMAudio(song['url']), after=lambda e: bot.loop.create_task(play_next_song(ctx, voice_client)))
-        embed = discord.Embed(title='Now playing', description=f'[{song["title"]}]({song["url"]})', color=discord.Color.blurple())
-        embed.set_footer(text=f'Requested by {song["requester"]}')
-        await ctx.send(embed=embed)
-        song_queue.pop(0)
-    else:
-        await voice_client.disconnect()
+    await asyncio.sleep(5)  # Delay between songs
+
+    if not voice_client.is_playing():
+        if len(song_queue) > 0:
+            song = song_queue.pop(0)
+            voice_client.play(discord.FFmpegPCMAudio(song['url']), after=lambda e: bot.loop.create_task(play_next_song(ctx, voice_client)))
+
+            embed = discord.Embed(title='Now playing', description=f'[{song["title"]}]({song["url"]})', color=discord.Color.blurple())
+            embed.set_footer(text=f'Requested by {song["requester"]}')
+            await ctx.send(embed=embed)
+        else:
+            await voice_client.disconnect()
 
 @bot.command()
 async def stop(ctx):
@@ -116,5 +110,5 @@ async def stop(ctx):
 @bot.event
 async def on_command_error(ctx, error):
     await ctx.send(f'An error occurred: {str(error)}')
-
+# bot.run('MTEyMzk2NzQyNjE3OTExNzA2Ng.G-T9AQ.yHTsWLKKjrp75-aSHOINB8-ohI-nQy5lHBDcSI')
 bot.run(os.getenv('BOT_TOKEN'))
