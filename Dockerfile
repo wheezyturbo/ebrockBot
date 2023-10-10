@@ -5,7 +5,7 @@ ENV DISCORD_KEY b'gAAAAABlCvHY-kPq1VIJurDUg4fovZpVHcdfMxvMKUTEYwlgDkImCbma2n6g15
 RUN apt-get update && apt-get install -y ffmpeg
 
 # Install Python dependencies
-RUN pip install discord yt_dlp ffmpeg pynacl
+RUN pip install cryptography discord yt_dlp ffmpeg pynacl
 
 # Copy the bot code to the container
 COPY . /app

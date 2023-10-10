@@ -2,28 +2,11 @@ import discord
 from discord.ext import commands
 import yt_dlp
 import os
-from cryptography.fernet import Fernet
-
 
 intents = discord.Intents.all()
 intents.voice_states = True
 intents.members = True
 intents.messages = True
-
-
-
-# Replace 'your_key_here' with your Fernet key
-key = b'cP9gIZiA1KUi7-Wp4GIfgy3QTChhhBOeBwZDh164iwc='
-
-# Create a Fernet cipher suite with the key
-cipher_suite = Fernet(key)
-
-encrypted_data = os.environ.get('DISCORD_KEY')
-
-# Decrypt the data
-DISCORD_kEY = cipher_suite.decrypt(encrypted_data).decode()
-
-
 
 bot = commands.Bot(command_prefix='!', intents=intents)
 
@@ -121,7 +104,8 @@ async def play_next_song(ctx, voice_client):
         await voice_client.disconnect()
 @bot.command()
 async def status(ctx):
-    await ctx.send("ebrockBot is currently online! Enjoy your moosik...")
+    await ctx.send("ElonThomasGaeBot is currently online! Enjoy your moosik...\
+            just as you expected I'm gae")
 
 @bot.command()
 async def stop(ctx):
@@ -168,4 +152,4 @@ async def download(ctx, media_type, url):
 async def on_command_error(ctx, error):
     await ctx.send(f'An error occurred: {str(error)}')
 
-bot.run(DISCORD_KEY)
+bot.run("MTEyMzk2NzQyNjE3OTExNzA2Ng.G7qZLM.csvw5aaEPSeSK3s6CiDlyt9HzLeza7H7siHp-w")
